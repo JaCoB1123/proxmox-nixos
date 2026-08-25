@@ -38,6 +38,24 @@
               overlays = [
                 self.overlays.${system}
                 (_: _: { inherit (nixpkgs-libvncserver.legacyPackages.${system}) libvncserver; })
+                (final: prev: {
+                  perl5 = prev.perl5 // {
+                    pkgs = prev.perl5.pkgs.overrideScope (
+                      final2: prev2: {
+                        XMLTwig = prev2.XMLTwig.overrideAttrs (_: {
+                          version = "3.54";
+                          src = builtins.fetchurl {
+                            url = "https://cpan.metacpan.org/authors/id/M/MI/MIROD/XML-Twig-3.54.tar.gz";
+                            sha256 = "0b744a9737a070f95c32154afd526bf5ebe76a59feb8bc1f5dbc6cdaa5e0e529";
+                          };
+                        });
+                        NetDBus = prev2.NetDBus.overrideAttrs (_: {
+                          propagatedBuildInputs = [ final2.XMLTwig ];
+                        });
+                      }
+                    );
+                  };
+                })
               ];
             };
           in
