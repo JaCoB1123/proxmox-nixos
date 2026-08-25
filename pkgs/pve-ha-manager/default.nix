@@ -67,6 +67,7 @@ perl5.pkgs.toPerlModule (
 
     postInstall = ''
       cp ${pve-container}/.bin/pct $out/bin
+      sed -i '1s/ -T$//' $out/bin/pct
       cp ${pve-qemu-server}/.bin/* $out/bin
       rm $out/bin/pve-ha-simulator
     '';
