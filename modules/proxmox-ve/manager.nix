@@ -26,6 +26,7 @@ lib.mkIf cfg.enable {
         bashInteractive
         btrfs-progs
         cdrkit
+        e2fsprogs
         pve-storage
         swtpm
       ] ++ [ config.boot.zfs.package ];
@@ -54,6 +55,17 @@ lib.mkIf cfg.enable {
         "pvedaemon.service"
         "sshd.service"
       ];
+      path =
+        with pkgs;
+        [
+          bashInteractive
+          btrfs-progs
+          cdrkit
+          e2fsprogs
+          pve-storage
+          swtpm
+        ]
+        ++ [ config.boot.zfs.package ];
       serviceConfig = {
         ExecStartPre = [
           "${cfg.package}/bin/pvecm updatecerts -silent"
@@ -90,11 +102,14 @@ lib.mkIf cfg.enable {
         "pve-ha-crm.service"
         "pve-ha-lrm.service"
       ];
-      path = with pkgs; [
-        bashInteractive
-        cdrkit
-        swtpm
-      ] ++ [ config.boot.zfs.package ];
+      path =
+        with pkgs;
+        [
+          bashInteractive
+          cdrkit
+          swtpm
+        ]
+        ++ [ config.boot.zfs.package ];
       unitConfig = {
         RefuseManualStart = true;
         RefuseManualStop = true;
@@ -138,6 +153,7 @@ lib.mkIf cfg.enable {
       ];
       path = [
         pkgs.btrfs-progs
+        pkgs.e2fsprogs
         config.boot.zfs.package
       ];
       serviceConfig = {
@@ -160,6 +176,7 @@ lib.mkIf cfg.enable {
       after = [ "pve-cluster.service" ];
       path = [
         pkgs.btrfs-progs
+        pkgs.e2fsprogs
         config.boot.zfs.package
       ];
       serviceConfig = {

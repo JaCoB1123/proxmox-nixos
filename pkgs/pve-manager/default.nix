@@ -17,6 +17,7 @@
   ceph,
   gnupg,
   graphviz,
+  gnutar,
   gzip,
   biome,
   openvswitch,
@@ -171,6 +172,7 @@ perl5.pkgs.toPerlModule (
               termproxy
               util-linux
               wget
+              gnutar
 
               ## dependencies of backup and restore
               bash
