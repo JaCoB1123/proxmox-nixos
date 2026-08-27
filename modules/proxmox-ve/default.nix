@@ -71,7 +71,14 @@ in
 
       services.openssh = {
         enable = true;
-        settings.AcceptEnv = if lib.versionAtLeast pkgs.lib.version "26.05pre-git" then ["LANG" "LC_*"] else "LANG LC_*";
+        settings.AcceptEnv =
+          if lib.versionAtLeast pkgs.lib.version "26.05pre-git" then
+            [
+              "LANG"
+              "LC_*"
+            ]
+          else
+            "LANG LC_*";
       };
       programs.ssh.extraConfig = ''
         Host *
@@ -91,6 +98,27 @@ in
         group = "www-data";
       };
       users.groups.www-data = { };
+
+      # Subuid/subgid ranges for unprivileged LXC containers. PVE maps a CT's
+      # root (uid 0) into the invoking user's subuid/subgid range, and
+      # newuidmap/newgidmap refuse to run unless those ranges are declared for
+      # that user. Give root the standard 100000:65536 range so unprivileged CTs
+      # work out of the box; override users.users.root.subUidRanges/subGidRanges
+      # (or add ranges for other users) to change this.
+      users.users.root = {
+        subUidRanges = mkDefault [
+          {
+            count = 65536;
+            startUid = 100000;
+          }
+        ];
+        subGidRanges = mkDefault [
+          {
+            count = 65536;
+            startGid = 100000;
+          }
+        ];
+      };
 
       environment.systemPackages = [ cfg.package ];
       environment.etc.issue.enable = false;
