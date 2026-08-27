@@ -6,15 +6,20 @@
   coreutils,
   diffutils,
   dpkg,
+  e2fsprogs,
+  gnutar,
   iproute2,
+  lxc,
   perl5,
   glibc,
   openvswitch,
   pciutils,
   proxmox-backup-client,
+  shadow,
   systemd,
   tzdata,
   usbutils,
+  util-linux,
   mimebase32,
   mimebase64,
   replaceVars,
@@ -98,10 +103,15 @@ perl5.pkgs.toPerlModule (
       coreutils
       diffutils
       dpkg
+      e2fsprogs
+      gnutar
       iproute2
+      lxc
       proxmox-backup-client
+      shadow
       systemd
       usbutils
+      util-linux
     ]
     ++ perlDeps;
 
@@ -142,6 +152,14 @@ perl5.pkgs.toPerlModule (
       substituteInPlace $out/${perl5.libPrefix}/${perl5.version}/PVE/Tools.pm \
         --replace-fail "['dpkg', '--print-architecture']" \
         "['${dpkg}/bin/dpkg', '--print-architecture']"
+
+      # Re-sync PATH into the C environ before exec'ing a child. PVE daemons and
+      # the in-process CLI job runner set their process title, which overwrites
+      # the initial argv/env stack region and destroys the C environ; without a
+      # valid PATH entry, execvp cannot resolve bare commands (e.g. mkfs.ext4,
+      # lxc-usernsexec, tar, newuidmap). Assigning $ENV{PATH} triggers perl's
+      # env hook (do_setenv), restoring a usable PATH for child processes.
+      sed -i '/open3(\$writer, \$reader, \$error, @\$cmd)/i\            $ENV{PATH} = "${e2fsprogs}/bin:${lxc}/bin:${gnutar}/bin:${shadow}/bin:${util-linux}/bin:${iproute2}/bin:" . ($ENV{PATH} // "");' $out/${perl5.libPrefix}/${perl5.version}/PVE/Cmd.pm
     '';
 
     passthru.updateScript = pve-update-script {
