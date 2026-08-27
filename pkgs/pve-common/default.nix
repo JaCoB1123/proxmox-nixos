@@ -20,6 +20,9 @@
   tzdata,
   usbutils,
   util-linux,
+  bzip2,
+  gzip,
+  xz,
   mimebase32,
   mimebase64,
   replaceVars,
@@ -112,6 +115,9 @@ perl5.pkgs.toPerlModule (
       systemd
       usbutils
       util-linux
+      bzip2
+      gzip
+      xz
     ]
     ++ perlDeps;
 
@@ -158,8 +164,10 @@ perl5.pkgs.toPerlModule (
       # the initial argv/env stack region and destroys the C environ; without a
       # valid PATH entry, execvp cannot resolve bare commands (e.g. mkfs.ext4,
       # lxc-usernsexec, tar, newuidmap). Assigning $ENV{PATH} triggers perl's
-      # env hook (do_setenv), restoring a usable PATH for child processes.
-      sed -i '/open3(\$writer, \$reader, \$error, @\$cmd)/i\            $ENV{PATH} = "${e2fsprogs}/bin:${lxc}/bin:${gnutar}/bin:${shadow}/bin:${util-linux}/bin:${iproute2}/bin:" . ($ENV{PATH} // "");' $out/${perl5.libPrefix}/${perl5.version}/PVE/Cmd.pm
+      # env hook (do_setenv), restoring a usable PATH for child processes. The
+      # compression tools (xz/gzip/bzip2) are needed because tar is invoked with
+      # -J/-z/-j and execs them as a grandchild to decompress the CT archive.
+      sed -i '/open3(\$writer, \$reader, \$error, @\$cmd)/i\            $ENV{PATH} = "${e2fsprogs}/bin:${lxc}/bin:${gnutar}/bin:${shadow}/bin:${util-linux}/bin:${iproute2}/bin:${xz}/bin:${gzip}/bin:${bzip2}/bin:" . ($ENV{PATH} // "");' $out/${perl5.libPrefix}/${perl5.version}/PVE/Cmd.pm
     '';
 
     passthru.updateScript = pve-update-script {
