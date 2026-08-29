@@ -7,11 +7,26 @@
   lxc,
   openssh,
   tzdata,
+  pve-cluster,
+  pve-common,
+  pve-firewall,
+  pve-guest-common,
+  pve-network,
+  pve-storage,
   pve-update-script,
 }:
 
 let
-  perlDeps = [ ];
+  # The lxc hooks (see postFixup) are perl scripts executed directly by
+  # lxc-start; they need these PVE modules at runtime.
+  perlDeps = [
+    pve-cluster
+    pve-common
+    pve-firewall
+    pve-guest-common
+    pve-network
+    pve-storage
+  ];
   perlEnv = perl5.withPackages (_: perlDeps);
 in
 
@@ -80,6 +95,20 @@ perl5.pkgs.toPerlModule (
         -e "s|/usr/bin/lxc|${lxc}/bin/lxc|" \
         -e "s|/usr/share/lxc|$out/share/lxc|" \
         -e "s|/usr/share/zoneinfo|${tzdata}/share/zoneinfo|"
+
+      # The lxc hooks are perl scripts executed directly by lxc-start (not
+      # via a toPerlModule wrapper), so they need a working interpreter and
+      # the PVE modules on @INC. The env perl provides the modules from
+      # perlDeps; our own modules (PVE::LXC::*) are added via `use lib`
+      # since this package cannot be part of its own build environment.
+      for h in $out/share/lxc/hooks/lxc-pve-prestart-hook \
+               $out/share/lxc/hooks/lxc-pve-autodev-hook \
+               $out/share/lxc/hooks/lxc-pve-poststop-hook; do
+        sed -i \
+          -e "1s|#!/usr/bin/perl|#!${perlEnv}/bin/perl|" \
+          -e "1a use lib '$out/lib/perl5/site_perl/${perl5.version}';" \
+          $h
+      done
     '';
 
     passthru.updateScript = pve-update-script { };
