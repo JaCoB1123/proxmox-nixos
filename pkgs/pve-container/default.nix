@@ -50,6 +50,19 @@ perl5.pkgs.toPerlModule (
       chmod -R +w $NIX_BUILD_TOP/lxc
     '';
 
+    postInstall = ''
+      # PVE references lxc's config files (common.seccomp, common.conf,
+      # userns.conf) and hooks via paths that point at this package's own
+      # store path (see postFixup), but on a normal system those files are
+      # provided by the lxc package in a shared /usr/share/lxc directory.
+      # Install them here so this package is self-contained.
+      cp -r $NIX_BUILD_TOP/lxc/config/* $out/share/lxc/config/
+      cp -r $NIX_BUILD_TOP/lxc/hooks/* $out/share/lxc/hooks/
+      # nixpkgs' lxc derivation rewrites internal references to the system
+      # profile, which does not contain lxc; repoint them at our own copy.
+      find $out/share/lxc -type f -exec sed -i "s|/run/current-system/sw/share|$out/share|g" {} +
+    '';
+
     makeFlags = [
       "DESTDIR=$(out)"
       "PREFIX=$(out)"
