@@ -27,6 +27,8 @@ lib.mkIf cfg.enable {
         btrfs-progs
         cdrkit
         e2fsprogs
+        # PVE's perl code shells out to the lxc tools (lxc-info, ...)
+        lxc
         pve-storage
         swtpm
       ] ++ [ config.boot.zfs.package ];
@@ -62,6 +64,8 @@ lib.mkIf cfg.enable {
           btrfs-progs
           cdrkit
           e2fsprogs
+          # PVE's perl code shells out to the lxc tools (lxc-info, ...)
+          lxc
           pve-storage
           swtpm
         ]

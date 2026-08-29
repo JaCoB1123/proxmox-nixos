@@ -1,6 +1,7 @@
 {
   lib,
   buildEnv,
+  lxc,
   linstor-client,
   pve-access-control,
   pve-cluster,
@@ -21,6 +22,9 @@ buildEnv rec {
   name = "proxmox-ve-${pve-manager.version}";
 
   paths = [
+    # PVE's perl code shells out to the lxc tools (lxc-info, lxc-stop, ...);
+    # expose them on the system PATH.
+    lxc
     pve-access-control
     pve-cluster
     pve-container

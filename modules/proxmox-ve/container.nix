@@ -7,6 +7,24 @@
 
 lib.mkIf config.services.proxmox-ve.enable {
   systemd.services = {
+    # PVE's start/stop code waits for container state changes on lxc's
+    # monitor socket (PVE::LXC::Monitor), which is created by lxc-monitord.
+    # Without it every CT start/stop logs "failed to connect to monitor
+    # socket" and pct start races the container startup. --daemon runs it
+    # persistently in the foreground (Type=simple); the lxcpath must match
+    # the one PVE assumes (/var/lib/lxc, its monitor socket name is a hash
+    # of that path).
+    lxc-monitord = {
+      description = "LXC Container Monitoring Daemon";
+      wantedBy = [ "multi-user.target" ];
+      before = [ "pve-guests.service" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.lxc}/libexec/lxc/lxc-monitord --daemon /var/lib/lxc";
+        Restart = "on-failure";
+      };
+    };
+
     # The pve-lxc-syscalld daemon (needed for the experimental 'mknod' CT
     # feature) is not built by the pve-container derivation, so this unit
     # would fail at boot. Re-enable it once the daemon is packaged:
