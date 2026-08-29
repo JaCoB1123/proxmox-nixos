@@ -2,6 +2,7 @@
   lib,
   buildEnv,
   lxc,
+  runCommand,
   linstor-client,
   pve-access-control,
   pve-cluster,
@@ -22,9 +23,14 @@ buildEnv rec {
   name = "proxmox-ve-${pve-manager.version}";
 
   paths = [
-    # PVE's perl code shells out to the lxc tools (lxc-info, lxc-stop, ...);
-    # expose them on the system PATH.
-    lxc
+    # Only the lxc tools (bin/) go on the system PATH; the full lxc package
+    # would collide with the share/lxc files that pve-container bundles in
+    # the buildEnv merge. PVE's perl code shells out to these (lxc-info,
+    # lxc-stop, ...), and PVE::VZDump::check_bin scans $PATH directly.
+    (runCommand "lxc-${lxc.version}-bin" { } ''
+      mkdir -p $out/bin
+      ln -s ${lxc}/bin/* $out/bin/
+    '')
     pve-access-control
     pve-cluster
     pve-container
