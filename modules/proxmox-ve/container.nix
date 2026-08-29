@@ -7,17 +7,21 @@
 
 lib.mkIf config.services.proxmox-ve.enable {
   systemd.services = {
-    pve-lxc-syscalld = {
-      description = "Proxmox VE LXC Syscall Daemon";
-      wantedBy = [ "multi-user.target" ];
-      before = [ "pve-guests.service" ];
-      serviceConfig = {
-        Type = "notify";
-        ExecStart = "/usr/lib/x86_64-linux-gnu/pve-lxc-syscalld/pve-lxc-syscalld --system /run/pve/lxc-syscalld.sock";
-        RuntimeDirectory = "pve";
-        Restart = "on-failure";
-      };
-    };
+    # The pve-lxc-syscalld daemon (needed for the experimental 'mknod' CT
+    # feature) is not built by the pve-container derivation, so this unit
+    # would fail at boot. Re-enable it once the daemon is packaged:
+    #
+    # pve-lxc-syscalld = {
+    #   description = "Proxmox VE LXC Syscall Daemon";
+    #   wantedBy = [ "multi-user.target" ];
+    #   before = [ "pve-guests.service" ];
+    #   serviceConfig = {
+    #     Type = "notify";
+    #     ExecStart = "${pkgs.pve-container}/lib/pve-lxc-syscalld/pve-lxc-syscalld --system /run/pve/lxc-syscalld.sock";
+    #     RuntimeDirectory = "pve";
+    #     Restart = "on-failure";
+    #   };
+    # };
 
     "pve-container-debug@" = {
       # based on lxc@.service, but without an install section because
