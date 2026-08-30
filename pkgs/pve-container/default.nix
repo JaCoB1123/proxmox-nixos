@@ -14,6 +14,8 @@
   pve-network,
   pve-storage,
   pve-update-script,
+  termproxy,
+  vncterm,
 }:
 
 let
@@ -56,7 +58,15 @@ perl5.pkgs.toPerlModule (
         -e "/MAN5DIR/d"
     '';
 
-    buildInputs = [ perlEnv ];
+    # dtach/openssh/termproxy/vncterm are referenced by absolute store path
+    # in postFixup; declare them so nix tracks the dependency.
+    buildInputs = [
+      perlEnv
+      dtach
+      openssh
+      termproxy
+      vncterm
+    ];
     propagatedBuildInputs = perlDeps;
     dontPatchShebangs = true;
 
@@ -90,8 +100,8 @@ perl5.pkgs.toPerlModule (
         -e "s|/usr/bin/dtach|${dtach}/bin/dtach|" \
         -e "s|/usr/bin/ssh|${openssh}/bin/ssh|" \
         -e "s|/bin/true|true|" \
-        -e "s|/usr/bin/vncterm||" \
-        -e "s|/usr/bin/termproxy||" \
+        -e "s|/usr/bin/vncterm|${vncterm}/bin/vncterm|" \
+        -e "s|/usr/bin/termproxy|${termproxy}/bin/termproxy|" \
         -e "s|/usr/bin/lxc|${lxc}/bin/lxc|" \
         -e "s|/usr/share/lxc|$out/share/lxc|" \
         -e "s|/usr/share/zoneinfo|${tzdata}/share/zoneinfo|"
