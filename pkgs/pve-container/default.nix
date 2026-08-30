@@ -96,14 +96,18 @@ perl5.pkgs.toPerlModule (
         -e "s|/usr/share/lxc|$out/share/lxc|" \
         -e "s|/usr/share/zoneinfo|${tzdata}/share/zoneinfo|"
 
-      # The lxc hooks are perl scripts executed directly by lxc-start (not
-      # via a toPerlModule wrapper), so they need a working interpreter and
-      # the PVE modules on @INC. The env perl provides the modules from
-      # perlDeps; our own modules (PVE::LXC::*) are added via `use lib`
-      # since this package cannot be part of its own build environment.
+      # The lxc hooks and the lxcnetaddbr / pve-container-stop-wrapper
+      # scripts are perl scripts executed directly by lxc-start or systemd
+      # (not via a toPerlModule wrapper), so they need a working
+      # interpreter and the PVE modules on @INC. The env perl provides the
+      # modules from perlDeps; our own modules (PVE::LXC::*) are added via
+      # `use lib` since this package cannot be part of its own build
+      # environment.
       for h in $out/share/lxc/hooks/lxc-pve-prestart-hook \
                $out/share/lxc/hooks/lxc-pve-autodev-hook \
-               $out/share/lxc/hooks/lxc-pve-poststop-hook; do
+               $out/share/lxc/hooks/lxc-pve-poststop-hook \
+               $out/share/lxc/lxcnetaddbr \
+               $out/share/lxc/pve-container-stop-wrapper; do
         sed -i \
           -e "1s|#!/usr/bin/perl|#!${perlEnv}/bin/perl|" \
           -e "1a use lib '$out/lib/perl5/site_perl/${perl5.version}';" \

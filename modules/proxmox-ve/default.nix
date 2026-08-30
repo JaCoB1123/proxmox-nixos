@@ -68,6 +68,10 @@ in
       systemd.tmpfiles.rules = [
         "d /etc/network 0755 root root -"
         "f /etc/network/interfaces 0755 root root -"
+        # PVE's perl code hardcodes /sbin/ip (e.g. PVE::LXC::net_tap_plug,
+        # which runs on the host when a CT's veth is plugged); NixOS has no
+        # /sbin, so point it at the system profile's sbin.
+        "L+ /sbin - - - - /run/current-system/sw/sbin"
       ];
 
       services.openssh = {
@@ -121,7 +125,12 @@ in
         ];
       };
 
-      environment.systemPackages = [ cfg.package ];
+      # iproute2 provides /sbin/ip (via the /sbin symlink above), which
+      # PVE's perl code invokes by absolute path.
+      environment.systemPackages = [
+        cfg.package
+        pkgs.iproute2
+      ];
       environment.etc.issue.enable = false;
 
       networking.firewall = mkIf cfg.openFirewall {
