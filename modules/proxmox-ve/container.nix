@@ -82,7 +82,7 @@ lib.mkIf config.services.proxmox-ve.enable {
         # Environment=BOOTUP=serial
         # Environment=CONSOLETYPE=serial
         # Prevent container init from putting all its output into the journal
-        StandardOutput = null;
+        StandardOutput = "null";
         StandardError = "file:/run/pve/ct-%i.stderr";
       };
       environment = {
@@ -111,7 +111,7 @@ lib.mkIf config.services.proxmox-ve.enable {
         # Environment=BOOTUP=serial
         # Environment=CONSOLETYPE=serial
         # Prevent container init from putting all its output into the journal
-        StandardOutput = null;
+        StandardOutput = "null";
         StandardError = "file:/run/pve/ct-%i.stderr";
       };
       environment = {
