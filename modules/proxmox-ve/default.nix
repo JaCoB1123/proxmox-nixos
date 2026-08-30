@@ -72,6 +72,9 @@ in
         # which runs on the host when a CT's veth is plugged); NixOS has no
         # /sbin, so point it at the system profile's sbin.
         "L+ /sbin - - - - /run/current-system/sw/sbin"
+        # PVE::Cmd runs string commands through perl's open3, which uses
+        # /bin/sh; NixOS has no /bin, so provide a managed symlink.
+        "L+ /bin/sh - - - - /run/current-system/sw/bin/sh"
       ];
 
       services.openssh = {

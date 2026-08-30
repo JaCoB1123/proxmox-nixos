@@ -66,7 +66,9 @@ lib.mkIf config.services.proxmox-ve.enable {
         StandardError = "file:/run/pve/ct-%i.stderr";
       };
       # The stop wrapper execs systemctl and lxc-stop via PATH.
-      environment = [ "PATH=${pkgs.lxc}/bin:${pkgs.systemd}/bin" ];
+      environment = {
+        PATH = "${pkgs.lxc}/bin:${pkgs.systemd}/bin";
+      };
     };
 
     "pve-container@" = {
@@ -94,7 +96,9 @@ lib.mkIf config.services.proxmox-ve.enable {
         StandardError = "file:/run/pve/ct-%i.stderr";
       };
       # The stop wrapper execs systemctl and lxc-stop via PATH.
-      environment = [ "PATH=${pkgs.lxc}/bin:${pkgs.systemd}/bin" ];
+      environment = {
+        PATH = "${pkgs.lxc}/bin:${pkgs.systemd}/bin";
+      };
     };
   };
 }
