@@ -159,15 +159,15 @@ perl5.pkgs.toPerlModule (
         --replace-fail "['dpkg', '--print-architecture']" \
         "['${dpkg}/bin/dpkg', '--print-architecture']"
 
-      # Re-sync PATH into the C environ before exec'ing a child. PVE daemons and
-      # the in-process CLI job runner set their process title, which overwrites
-      # the initial argv/env stack region and destroys the C environ; without a
-      # valid PATH entry, execvp cannot resolve bare commands (e.g. mkfs.ext4,
-      # lxc-usernsexec, tar, newuidmap). Assigning $ENV{PATH} triggers perl's
-      # env hook (do_setenv), restoring a usable PATH for child processes. The
-      # compression tools (xz/gzip/bzip2) are needed because tar is invoked with
-      # -J/-z/-j and execs them as a grandchild to decompress the CT archive.
-      sed -i '/open3(\$writer, \$reader, \$error, @\$cmd)/i\            $ENV{PATH} = "${e2fsprogs}/bin:${lxc}/bin:${gnutar}/bin:${shadow}/bin:${util-linux}/bin:${iproute2}/bin:${xz}/bin:${gzip}/bin:${bzip2}/bin:" . ($ENV{PATH} // "");' $out/${perl5.libPrefix}/${perl5.version}/PVE/Cmd.pm
+      # Prepend the store bin dirs to PATH before exec'ing a child so that
+      # execvp can resolve bare commands (e.g. mkfs.ext4, lxc-usernsexec, tar,
+      # newuidmap) that are missing from the daemon unit PATHs. The compression
+      # tools (xz/gzip/bzip2) are needed because tar is invoked with -J/-z/-j
+      # and execs them as a grandchild to decompress the CT archive.
+      # The guard makes this idempotent: run_command() is called constantly by
+      # the daemons, and unconditionally prepending would grow PATH without
+      # bound until execve fails with E2BIG (MAX_ARG_STRLEN).
+      sed -i '/open3(\$writer, \$reader, \$error, @\$cmd)/i\            $ENV{PATH} = (index(($ENV{PATH} // ""), "${e2fsprogs}/bin:") == 0) ? $ENV{PATH} : "${e2fsprogs}/bin:${lxc}/bin:${gnutar}/bin:${shadow}/bin:${util-linux}/bin:${iproute2}/bin:${xz}/bin:${gzip}/bin:${bzip2}/bin:" . ($ENV{PATH} // "");' $out/${perl5.libPrefix}/${perl5.version}/PVE/Cmd.pm
     '';
 
     passthru.updateScript = pve-update-script {
