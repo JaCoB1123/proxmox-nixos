@@ -5,6 +5,26 @@
   ...
 }:
 
+let
+  # PATH for the pve-container units. The stop wrapper execs systemctl and
+  # lxc-stop via PATH, lxc-start looks up newuidmap/newgidmap on PATH for
+  # unprivileged CTs (and runs them through /bin/sh), and the PVE hooks need
+  # umount. mkOverride beats the NixOS default service PATH (mkDefault).
+  ctPath = lib.makeBinPath (
+    [
+      pkgs.lxc
+      pkgs.shadow
+      pkgs.util-linux
+    ]
+    ++ [
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.gnugrep
+      pkgs.gnused
+      pkgs.systemd
+    ]
+  );
+in
 lib.mkIf config.services.proxmox-ve.enable {
   systemd.services = {
     # PVE's start/stop code waits for container state changes on lxc's
@@ -65,9 +85,8 @@ lib.mkIf config.services.proxmox-ve.enable {
         StandardOutput = null;
         StandardError = "file:/run/pve/ct-%i.stderr";
       };
-      # The stop wrapper execs systemctl and lxc-stop via PATH.
       environment = {
-        PATH = "${pkgs.lxc}/bin:${pkgs.systemd}/bin";
+        PATH = lib.mkOverride 10 ctPath;
       };
     };
 
@@ -95,9 +114,8 @@ lib.mkIf config.services.proxmox-ve.enable {
         StandardOutput = null;
         StandardError = "file:/run/pve/ct-%i.stderr";
       };
-      # The stop wrapper execs systemctl and lxc-stop via PATH.
       environment = {
-        PATH = "${pkgs.lxc}/bin:${pkgs.systemd}/bin";
+        PATH = lib.mkOverride 10 ctPath;
       };
     };
   };
