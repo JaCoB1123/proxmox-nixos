@@ -84,7 +84,7 @@ lib.mkIf cfg.enable {
         description = "Seed single-node corosync.conf into the PVE cluster filesystem";
         after = [ "pve-cluster.service" ];
         wants = [ "pve-cluster.service" ];
-        preStart = ''
+        script = ''
           [ -f /etc/pve/corosync.conf ] || cp ${corosyncConf} /etc/pve/corosync.conf
           ln -sf /etc/pve/corosync.conf /etc/corosync/corosync.conf
         '';
