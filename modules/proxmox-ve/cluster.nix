@@ -42,10 +42,66 @@ lib.mkIf cfg.enable {
       };
     };
 
+    # Seeds a single-node corosync.conf into the PVE cluster filesystem
+    # (like a stock Proxmox install has) so that pve-clusterd and the
+    # web UI can report node/VM/storage status. Only written when missing,
+    # so a real multi-node cluster created later via pvecm is untouched.
+    "pve-corosync-conf" =
+      let
+        corosyncConf = pkgs.writeText "corosync.conf" ''
+          logging {
+            debug: off
+            to_syslog: yes
+          }
+
+          nodelist {
+            node {
+              name: ${config.networking.hostName}
+              nodeid: 1
+              quorum_votes: 1
+              ring0_addr: ${cfg.ipAddress}
+            }
+          }
+
+          quorum {
+            provider: corosync_votequorum
+          }
+
+          totem {
+            cluster_name: proxmox
+            config_version: 1
+            interface {
+              bindnetaddr: ${cfg.ipAddress}
+              ringnumber: 0
+            }
+            ip_version: ipv4
+            secauth: on
+            version: 2
+          }
+        '';
+      in
+      {
+        description = "Seed single-node corosync.conf into the PVE cluster filesystem";
+        after = [ "pve-cluster.service" ];
+        wants = [ "pve-cluster.service" ];
+        preStart = ''
+          [ -f /etc/pve/corosync.conf ] || cp ${corosyncConf} /etc/pve/corosync.conf
+          ln -sf /etc/pve/corosync.conf /etc/corosync/corosync.conf
+        '';
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+      };
+
     corosync = {
       description = "Corosync Cluster Engine";
       requires = [ "network-online.target" ];
-      after = [ "network-online.target" ];
+      after = [
+        "network-online.target"
+        "pve-corosync-conf.service"
+      ];
+      wants = [ "pve-corosync-conf.service" ];
       wantedBy = [ "multi-user.target" ];
       unitConfig = {
         ConditionKernelCommandLine = "!nocluster";
