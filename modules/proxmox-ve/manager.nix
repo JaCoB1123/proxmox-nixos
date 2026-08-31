@@ -176,6 +176,7 @@ lib.mkIf cfg.enable {
 
     pvestatd = {
       description = "PVE Status Daemon";
+      wantedBy = [ "multi-user.target" ];
       wants = [ "pve-cluster.service" ];
       after = [ "pve-cluster.service" ];
       path = [

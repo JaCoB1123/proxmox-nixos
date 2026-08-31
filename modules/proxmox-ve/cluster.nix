@@ -87,6 +87,12 @@ lib.mkIf cfg.enable {
         script = ''
           [ -f /etc/pve/corosync.conf ] || cp ${corosyncConf} /etc/pve/corosync.conf
           ln -sf /etc/pve/corosync.conf /etc/corosync/corosync.conf
+          # secauth: on requires an authkey of at least 1024 bits, readable only by root
+          if [ ! -f /etc/corosync/authkey ]; then
+            { head -c 128 /dev/urandom | od -An -tx1 | tr -d " \n"; echo; } > /etc/corosync/authkey.tmp
+            chmod 0600 /etc/corosync/authkey.tmp
+            mv /etc/corosync/authkey.tmp /etc/corosync/authkey
+          fi
         '';
         serviceConfig = {
           Type = "oneshot";
@@ -108,7 +114,7 @@ lib.mkIf cfg.enable {
         ConditionPathExists = "/etc/corosync/corosync.conf";
       };
       serviceConfig = {
-        ExecStart = "${pkgs.corosync}/bin/corosync -f $COROSYNC_OPTIONS";
+        ExecStart = "${pkgs.corosync}/bin/corosync";
         ExecStop = "${pkgs.corosync}/bin/corosync-cfgtool -H --force";
         Type = "notify";
         StateDirectory = "corosync";
