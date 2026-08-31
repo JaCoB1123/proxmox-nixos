@@ -114,7 +114,8 @@ lib.mkIf cfg.enable {
         ConditionPathExists = "/etc/corosync/corosync.conf";
       };
       serviceConfig = {
-        ExecStart = "${pkgs.corosync}/bin/corosync";
+        # -f keeps corosync in the foreground so Type=notify works
+        ExecStart = "${pkgs.corosync}/bin/corosync -f";
         ExecStop = "${pkgs.corosync}/bin/corosync-cfgtool -H --force";
         Type = "notify";
         StateDirectory = "corosync";
