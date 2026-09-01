@@ -79,6 +79,25 @@
     machine.succeed("pct stop 103")
     machine.wait_until_succeeds("pct status 103 | grep -F 'status: stopped'")
 
+    # The web UI status view (/cluster/resources) is computed from pvestatd
+    # RRD samples plus corosync membership. Assert that it reports real
+    # statuses rather than "unknown" (the symptom when either pvestatd or
+    # corosync is not running).
+    machine.wait_until_succeeds(
+      "pvesh get /cluster/resources --output-format json | grep -F '\"status\":\"online\"'",
+      timeout=180,
+    )
+    machine.succeed("pct start 101")
+    machine.wait_until_succeeds(
+      "pvesh get /cluster/resources --output-format json | grep -F '\"status\":\"running\"'",
+      timeout=180,
+    )
+    machine.succeed(
+      "! pvesh get /cluster/resources --output-format json | grep -F '\"status\":\"unknown\"'",
+    )
+    machine.succeed("pct stop 101")
+    machine.wait_until_succeeds("pct status 101 | grep -F 'status: stopped'")
+
     # Cleanup
     machine.succeed("pct destroy 101", "pct destroy 102", "pct destroy 103")
   '';
