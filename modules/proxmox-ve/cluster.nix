@@ -46,7 +46,7 @@ lib.mkIf cfg.enable {
     # (like a stock Proxmox install has) so that pve-clusterd and the
     # web UI can report node/VM/storage status. Only written when missing,
     # so a real multi-node cluster created later via pvecm is untouched.
-    "pve-corosync-conf" =
+    "pve-corosync-conf" = lib.mkIf cfg.seedSingleNode (
       let
         corosyncConf = pkgs.writeText "corosync.conf" ''
           logging {
@@ -98,16 +98,17 @@ lib.mkIf cfg.enable {
           Type = "oneshot";
           RemainAfterExit = true;
         };
-      };
+      }
+    );
 
     corosync = {
       description = "Corosync Cluster Engine";
       requires = [ "network-online.target" ];
       after = [
         "network-online.target"
-        "pve-corosync-conf.service"
-      ];
-      wants = [ "pve-corosync-conf.service" ];
+      ]
+      ++ lib.optionals cfg.seedSingleNode [ "pve-corosync-conf.service" ];
+      wants = lib.optionals cfg.seedSingleNode [ "pve-corosync-conf.service" ];
       wantedBy = [ "multi-user.target" ];
       unitConfig = {
         ConditionKernelCommandLine = "!nocluster";

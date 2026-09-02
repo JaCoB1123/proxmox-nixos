@@ -49,6 +49,17 @@ in
         Open port in firewall for proxmox-admin (8006), rpcbind (111) and http(s) (80,443)
       '';
     };
+
+    seedSingleNode = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Seed a single-node corosync cluster at boot, mirroring stock Proxmox
+        where the installer creates a single-node cluster. This is what allows
+        pve-clusterd and the web UI to report node/VM/storage status. Disable
+        this if you want to create the cluster manually with pvecm instead.
+      '';
+    };
   };
 
   config = mkIf cfg.enable (mkMerge [
