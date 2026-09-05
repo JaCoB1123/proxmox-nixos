@@ -13,17 +13,24 @@ lib.mkIf cfg.enable {
   systemd.services = {
     pve-cluster = {
       description = "The Proxmox VE cluster filesystem";
+      # pmxcfs shells out to corosync-cfgtool (via system()) to reload the
+      # running corosync after the CFS corosync.conf changes, e.g. when a
+      # node joins the cluster; without it on PATH the reload fails and the
+      # new nodelist never takes effect.
+      path = [ pkgs.corosync ];
       wants = [
         "corosync.service"
         #"rrdcached.service"
         #"shutdown.target"
-      ];
+      ]
+      ++ lib.optionals cfg.seedSingleNode [ "pve-corosync-conf.service" ];
       after = [
         "network.target"
         "sys-fs-fuse-connections.mount"
         "time-sync.target"
         #"rrdcached.service"
-      ];
+      ]
+      ++ lib.optionals cfg.seedSingleNode [ "pve-corosync-conf.service" ];
       before = [
         "corosync.service"
         "cron.service"
@@ -81,12 +88,19 @@ lib.mkIf cfg.enable {
         '';
       in
       {
-        description = "Seed single-node corosync.conf into the PVE cluster filesystem";
-        after = [ "pve-cluster.service" ];
-        wants = [ "pve-cluster.service" ];
+        description = "Seed single-node corosync.conf for the PVE cluster filesystem";
+        # Must run BEFORE pve-cluster (pmxcfs). On first boot pmxcfs imports
+        # /etc/corosync/corosync.conf into the CFS only when it creates the CFS
+        # database (config.db); if that file is missing at that moment, pmxcfs
+        # starts in "local mode" and never reloads corosync when the nodelist
+        # later changes (e.g. on a node join), so the cluster can never form.
+        # Creating the file first makes pmxcfs import it into the CFS and start
+        # in cluster mode, where it keeps the file in sync and reloads corosync
+        # (corosync-cfgtool -R) on every nodelist change.
         script = ''
-          [ -f /etc/pve/corosync.conf ] || cp ${corosyncConf} /etc/pve/corosync.conf
-          ln -sf /etc/pve/corosync.conf /etc/corosync/corosync.conf
+          # Only seed when absent so a real multi-node cluster created later via
+          # pvecm (which rewrites this file) is left untouched on reboot.
+          [ -f /etc/corosync/corosync.conf ] || cp ${corosyncConf} /etc/corosync/corosync.conf
           # secauth: on requires an authkey of at least 1024 bits, readable only by root
           if [ ! -f /etc/corosync/authkey ]; then
             { head -c 128 /dev/urandom | od -An -tx1 | tr -d " \n"; echo; } > /etc/corosync/authkey.tmp
