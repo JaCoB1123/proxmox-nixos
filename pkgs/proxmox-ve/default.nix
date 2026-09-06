@@ -33,7 +33,7 @@ buildEnv rec {
     '')
     pve-access-control
     pve-cluster
-    pve-container
+    (pve-container.override { inherit enableLinstor; })
     pve-firewall
     (pve-ha-manager.override { inherit enableLinstor; })
     (pve-manager.override { inherit enableLinstor; })

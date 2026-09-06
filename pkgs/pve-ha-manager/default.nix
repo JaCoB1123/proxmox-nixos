@@ -17,8 +17,9 @@
 
 let
   pve-storage_ = pve-storage.override { inherit enableLinstor; };
+  pve-container_ = pve-container.override { inherit enableLinstor; };
   perlDeps = [
-    pve-container
+    pve-container_
     pve-firewall
     pve-guest-common
     (pve-qemu-server.override { pve-storage = pve-storage_; })
@@ -66,7 +67,7 @@ perl5.pkgs.toPerlModule (
     propagatedBuildInputs = perlDeps;
 
     postInstall = ''
-      cp ${pve-container}/.bin/pct $out/bin
+      cp ${pve-container_}/.bin/pct $out/bin
       sed -i '1s/ -T$//' $out/bin/pct
       cp ${pve-qemu-server}/.bin/* $out/bin
       rm $out/bin/pve-ha-simulator
@@ -75,10 +76,12 @@ perl5.pkgs.toPerlModule (
     postFixup = ''
       for bin in $out/bin/*; do
         wrapProgram $bin \
-          --prefix PATH : "$out/bin:${lib.makeBinPath [
-            pve-qemu
-            iproute2
-          ]}" \
+          --prefix PATH : "$out/bin:${
+            lib.makeBinPath [
+              pve-qemu
+              iproute2
+            ]
+          }" \
           --prefix PERL5LIB : $out/${perl5.libPrefix}/${perl5.version}:${perlLibPath}
       done
     '';

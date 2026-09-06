@@ -16,18 +16,23 @@
   pve-update-script,
   termproxy,
   vncterm,
+  enableLinstor ? false,
 }:
 
 let
   # The lxc hooks (see postFixup) are perl scripts executed directly by
-  # lxc-start; they need these PVE modules at runtime.
+  # lxc-start; they need these PVE modules at runtime. pve-storage is
+  # overridden so that when the linstor variant is selected upstream, this
+  # package's perl closure carries the same derivation (otherwise two
+  # pve-storage variants end up in one perl buildEnv and conflict on
+  # bin/pvesm).
   perlDeps = [
     pve-cluster
     pve-common
     pve-firewall
     pve-guest-common
     pve-network
-    pve-storage
+    (pve-storage.override { inherit enableLinstor; })
   ];
   perlEnv = perl5.withPackages (_: perlDeps);
 in
