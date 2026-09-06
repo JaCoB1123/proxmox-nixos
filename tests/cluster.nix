@@ -6,13 +6,9 @@ in
 {
   name = "pve-cluster";
 
-  # This test creates the cluster manually with pvecm (see clusterSetupScript),
-  # so disable the default single-node seeding that would otherwise pre-create a
-  # cluster on each node before the manual `pvecm create`.
-  nodes = lib.mapAttrs (_: cfg: { config, ... }: {
-    imports = [ cfg ];
-    services.proxmox-ve.seedSingleNode = false;
-  }) cluster.nodes;
+  # Nodes start unclustered (seedSingleNode is disabled in cluster-common.nix)
+  # so this test can build the cluster manually with pvecm + join.
+  inherit (cluster) nodes;
 
   testScript = ''
     ${cluster.clusterSetupScript}

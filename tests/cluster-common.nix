@@ -12,6 +12,10 @@ let
           enable = true;
           inherit ipAddress;
           bridges = [ "vmbr0" ];
+          # These tests build the cluster manually with `pvecm create` + join,
+          # so nodes must start unclustered. Seeding (default on) would boot
+          # each node into its own single-node cluster and break pvecm create.
+          seedSingleNode = false;
         };
 
         networking.bridges.vmbr0.interfaces = [ ];
