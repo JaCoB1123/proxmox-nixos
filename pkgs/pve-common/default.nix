@@ -23,6 +23,7 @@
   bzip2,
   gzip,
   xz,
+  wget,
   mimebase32,
   mimebase64,
   replaceVars,
@@ -157,7 +158,9 @@ perl5.pkgs.toPerlModule (
 
       substituteInPlace $out/${perl5.libPrefix}/${perl5.version}/PVE/Tools.pm \
         --replace-fail "['dpkg', '--print-architecture']" \
-        "['${dpkg}/bin/dpkg', '--print-architecture']"
+        "['${dpkg}/bin/dpkg', '--print-architecture']" \
+        --replace-fail "['wget', '--progress=dot:giga'" \
+        "['${wget}/bin/wget', '--progress=dot:giga'"
 
       # Prepend the store bin dirs to PATH before exec'ing a child so that
       # execvp can resolve bare commands (e.g. mkfs.ext4, lxc-usernsexec, tar,
