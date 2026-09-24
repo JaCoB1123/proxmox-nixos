@@ -108,9 +108,9 @@ in
           install -m 0755 ${containerInit} $rootfs/sbin/init
           ${pkgs.gnutar}/bin/tar --append --file $TMPDIR/closure.tar -C $rootfs sbin/init etc
 
-        ${pkgs.gzip}/bin/gzip -9 $TMPDIR/closure.tar
+        ${pkgs.zstd}/bin/zstd -19 $TMPDIR/closure.tar -o $TMPDIR/closure.tar.zst
         mkdir -p $out
-        mv $TMPDIR/closure.tar.gz $out/nixos-lxc-test.tar.gz
+        mv $TMPDIR/closure.tar.zst $out/nixos-lxc-test.tar.zst
       '';
     };
 }

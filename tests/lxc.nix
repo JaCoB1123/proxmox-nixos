@@ -29,14 +29,14 @@
 
     # Install the LXC template
     machine.succeed("mkdir -p /var/lib/vz/template/cache/")
-    machine.succeed("cp ${lxcTemplate}/nixos-lxc-test.tar.gz /var/lib/vz/template/cache/nixos-test.tar.gz")
+    machine.succeed("cp ${lxcTemplate}/nixos-lxc-test.tar.zst /var/lib/vz/template/cache/nixos-test.tar.zst")
 
     hostname = machine.succeed("hostname").strip()
 
     # PVE resolves --ostemplate via PVE::Storage::abs_filesystem_path, which
     # only accepts a volume ID or an existing file path, so use the absolute
     # cache path (a bare filename would not resolve against the daemon CWD).
-    tmpl = "/var/lib/vz/template/cache/nixos-test.tar.gz"
+    tmpl = "/var/lib/vz/template/cache/nixos-test.tar.zst"
 
     def assert_created(vmid):
         # pvesh exits 0 even when the job fails, so verify the CT actually

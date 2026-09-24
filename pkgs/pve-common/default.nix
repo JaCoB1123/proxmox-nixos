@@ -23,6 +23,7 @@
   bzip2,
   gzip,
   xz,
+  zstd,
   wget,
   mimebase32,
   mimebase64,
@@ -119,6 +120,7 @@ perl5.pkgs.toPerlModule (
       bzip2
       gzip
       xz
+      zstd
     ]
     ++ perlDeps;
 
@@ -165,12 +167,12 @@ perl5.pkgs.toPerlModule (
       # Prepend the store bin dirs to PATH before exec'ing a child so that
       # execvp can resolve bare commands (e.g. mkfs.ext4, lxc-usernsexec, tar,
       # newuidmap) that are missing from the daemon unit PATHs. The compression
-      # tools (xz/gzip/bzip2) are needed because tar is invoked with -J/-z/-j
-      # and execs them as a grandchild to decompress the CT archive.
+      # tools (xz/gzip/bzip2/zstd) are needed because tar is invoked with
+      # -J/-z/-j/--zstd and execs them as a grandchild to decompress the CT archive.
       # The guard makes this idempotent: run_command() is called constantly by
       # the daemons, and unconditionally prepending would grow PATH without
       # bound until execve fails with E2BIG (MAX_ARG_STRLEN).
-      sed -i '/open3(\$writer, \$reader, \$error, @\$cmd)/i\            $ENV{PATH} = (index(($ENV{PATH} // ""), "${e2fsprogs}/bin:") == 0) ? $ENV{PATH} : "${e2fsprogs}/bin:${lxc}/bin:${gnutar}/bin:${shadow}/bin:${util-linux}/bin:${iproute2}/bin:${xz}/bin:${gzip}/bin:${bzip2}/bin:" . ($ENV{PATH} // "");' $out/${perl5.libPrefix}/${perl5.version}/PVE/Cmd.pm
+      sed -i '/open3(\$writer, \$reader, \$error, @\$cmd)/i\            $ENV{PATH} = (index(($ENV{PATH} // ""), "${e2fsprogs}/bin:") == 0) ? $ENV{PATH} : "${e2fsprogs}/bin:${lxc}/bin:${gnutar}/bin:${shadow}/bin:${util-linux}/bin:${iproute2}/bin:${xz}/bin:${gzip}/bin:${bzip2}/bin:${zstd}/bin:" . ($ENV{PATH} // "");' $out/${perl5.libPrefix}/${perl5.version}/PVE/Cmd.pm
     '';
 
     passthru.updateScript = pve-update-script {
